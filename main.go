@@ -20,7 +20,16 @@ import (
 
 func main() {
 
-	var keypassing string
+	type content struct {
+		Text     string `json:"text"`
+		Keyinput string `json:"keyinput"`
+	}
+
+	type decryptcontent struct {
+		Cid      string `json:"cid"`
+		Keyinput string `json:"keyinput"`
+	}
+
 	// Echo instance
 	e := echo.New()
 
@@ -35,12 +44,15 @@ func main() {
 	})
 
 	//Get Function
-	e.GET("/get/:cid", func(c echo.Context) error {
+	e.POST("/get", func(c echo.Context) error {
 
-		keyinput := keypassing
-		cid := c.Param("cid")
+		decryptData := new(decryptcontent)
 
-		key := []byte(keyinput)
+		if err := c.Bind(decryptData); err != nil {
+			return err
+		}
+
+		key := []byte(decryptData.Keyinput)
 
 		sh := shell.NewShell("localhost:5001")
 
@@ -55,13 +67,13 @@ func main() {
 
 			//If File Does Not Exist Cotinue
 			//Get the file from ipfs
-			getError := sh.Get(cid, path)
+			getError := sh.Get(decryptData.Cid, path)
 			if getError != nil {
 				fmt.Printf("GetFile error: %s", getError)
 			}
 
 			//Store files data into a variable
-			textData, readErr := ioutil.ReadFile(cid)
+			textData, readErr := ioutil.ReadFile(decryptData.Cid)
 			if readErr != nil {
 				fmt.Printf("read error: %s", readErr)
 			}
@@ -84,17 +96,19 @@ func main() {
 	//Post Function
 	e.POST("/add", func(c echo.Context) error {
 
-		text := c.FormValue("text")
-		keyinput := c.FormValue("keyinput")
-		keypassing = keyinput
+		databinded := new(content)
+
+		if err := c.Bind(databinded); err != nil {
+			return err
+		}
 
 		//Make Sure key is off right size for encrypting
-		if len(keyinput) == 16 || len(keyinput) == 24 || len(keyinput) == 32 {
+		if len(databinded.Keyinput) == 16 || len(databinded.Keyinput) == 24 || len(databinded.Keyinput) == 32 {
 
-			key := []byte(keyinput)
+			key := []byte(databinded.Keyinput)
 
 			//Encrypt Text
-			encryptedText := encrypt(key, text)
+			encryptedText := encrypt(key, databinded.Text)
 
 			//Write data to IPFS
 			sh := shell.NewShell("localhost:5001")
@@ -103,13 +117,13 @@ func main() {
 				fmt.Fprint(os.Stderr, "error: %s", err)
 			}
 
-			fmt.Println(encryptedText)
-			return c.String(http.StatusOK, cid)
+			fmt.Println("\n" + encryptedText + "\n")
+			return c.JSON(http.StatusOK, cid)
 
 		}
 
-		fmt.Println("key: " + keyinput)
-		return c.String(http.StatusBadRequest, "Didnt Work: ")
+		fmt.Println("key: " + databinded.Keyinput)
+		return c.JSON(http.StatusBadRequest, "Didnt Work: ")
 	})
 
 	// Start server
