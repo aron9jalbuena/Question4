@@ -84,7 +84,7 @@ func main() {
 			//Decrypt
 			decryptText := decrypt(key, textString)
 
-			return c.String(http.StatusOK, decryptText)
+			return c.JSON(http.StatusOK, decryptText)
 
 		}
 
