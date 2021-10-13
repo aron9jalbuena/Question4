@@ -18,11 +18,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-type ipfsFile struct {
-	text string
-	key  []byte
-}
-
 func main() {
 
 	// Echo instance
@@ -31,10 +26,11 @@ func main() {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	e.GET("/", func(c echo.Context) error {
 		fmt.Print("Enter webpage")
-		return c.String(http.StatusOK, "Welcome To Site")
+		return c.String(http.StatusOK, "Welcome")
 	})
 
 	//Get Function
@@ -87,7 +83,7 @@ func main() {
 	//Post Function
 	e.POST("/add", func(c echo.Context) error {
 
-		text := "encrypt this sentence"
+		text := c.FormValue("text")
 		keyinput := "example key 1234"
 
 		//Make Sure key is off right size for encrypting
@@ -105,7 +101,7 @@ func main() {
 				fmt.Fprint(os.Stderr, "error: %s", err)
 			}
 
-			return c.String(http.StatusOK, "Here is the cid: "+cid+"\n"+"Text: "+encryptedText)
+			return c.String(http.StatusOK, cid)
 
 		}
 
