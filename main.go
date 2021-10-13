@@ -20,6 +20,7 @@ import (
 
 func main() {
 
+	var keypassing string
 	// Echo instance
 	e := echo.New()
 
@@ -36,7 +37,7 @@ func main() {
 	//Get Function
 	e.GET("/get/:cid", func(c echo.Context) error {
 
-		keyinput := "example key 1234"
+		keyinput := keypassing
 		cid := c.Param("cid")
 
 		key := []byte(keyinput)
@@ -84,7 +85,8 @@ func main() {
 	e.POST("/add", func(c echo.Context) error {
 
 		text := c.FormValue("text")
-		keyinput := "example key 1234"
+		keyinput := c.FormValue("keyinput")
+		keypassing = keyinput
 
 		//Make Sure key is off right size for encrypting
 		if len(keyinput) == 16 || len(keyinput) == 24 || len(keyinput) == 32 {
@@ -101,6 +103,7 @@ func main() {
 				fmt.Fprint(os.Stderr, "error: %s", err)
 			}
 
+			fmt.Println(encryptedText)
 			return c.String(http.StatusOK, cid)
 
 		}
@@ -109,16 +112,9 @@ func main() {
 		return c.String(http.StatusBadRequest, "Didnt Work: ")
 	})
 
-	e.POST("/save", save)
-
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
 
-}
-
-func save(c echo.Context) error {
-
-	return c.HTML(http.StatusOK, "Save Worked")
 }
 
 // encrypt string to base64 crypto using AES
